@@ -1,0 +1,41 @@
+TITLE: Software Installation Guidance
+
+CATEGORY: SOFTWARE_INSTALLATION
+
+PURPOSE:
+Provide guidance for installing approved corporate software.
+
+--------------------------------------------------
+GENERAL SOFTWARE INSTALLATION
+--------------------------------------------------
+
+1. Confirm that the requested software is approved by the organization.
+2. Use the organization's approved software portal or installation method.
+3. Search for the required application.
+4. Select the approved version.
+5. Start the installation.
+6. Follow the installation instructions.
+7. Restart the application or computer if required.
+8. Verify that the software launches successfully.
+
+--------------------------------------------------
+INSTALLATION FAILURE
+--------------------------------------------------
+
+If installation fails:
+
+1. Record the exact error message.
+2. Verify that the device has an active network connection.
+3. Verify that sufficient storage is available.
+4. Retry the installation using the approved installation method.
+5. If the installation continues to fail, contact the IT Service Desk.
+
+--------------------------------------------------
+SECURITY GUIDELINES
+--------------------------------------------------
+
+- Do not install unauthorized software.
+- Do not download software from unknown websites.
+- Do not bypass corporate security controls.
+- Do not use pirated or modified software.
+- Use only organization-approved installation sources.

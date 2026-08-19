@@ -1,0 +1,134 @@
+TITLE: VPN Troubleshooting Guide
+
+CATEGORY: VPN
+
+PURPOSE:
+This guide provides standard troubleshooting steps for common
+corporate VPN connectivity problems.
+
+--------------------------------------------------
+ISSUE 1: VPN IS NOT CONNECTING
+--------------------------------------------------
+
+Symptoms:
+- VPN client does not connect.
+- VPN connection fails.
+- User cannot access company applications.
+
+Troubleshooting Steps:
+
+1. Verify that the device has an active internet connection.
+
+2. Open a browser and verify that normal websites can be accessed.
+
+3. Close the corporate VPN application completely.
+
+4. Reopen the VPN application.
+
+5. Sign in using the corporate credentials.
+
+6. If Multi-Factor Authentication (MFA) is requested,
+   complete the MFA verification.
+
+7. Try connecting to the VPN again.
+
+8. If the VPN still does not connect, note the exact
+   error message displayed by the VPN client.
+
+--------------------------------------------------
+ISSUE 2: VPN AUTHENTICATION FAILURE
+--------------------------------------------------
+
+Symptoms:
+- VPN displays an authentication error.
+- Corporate credentials are rejected.
+- MFA authentication fails.
+
+Troubleshooting Steps:
+
+1. Verify that the correct corporate username is being used.
+
+2. Verify that the password is correct.
+
+3. Check whether the corporate password has expired.
+
+4. Complete MFA authentication if prompted.
+
+5. Close and reopen the VPN client.
+
+6. Try authentication again.
+
+7. If authentication continues to fail, contact the IT
+   Service Desk for further assistance.
+
+--------------------------------------------------
+ISSUE 3: VPN KEEPS DISCONNECTING
+--------------------------------------------------
+
+Symptoms:
+- VPN connects successfully but disconnects frequently.
+- Connection drops while using company applications.
+
+Troubleshooting Steps:
+
+1. Verify that the internet connection is stable.
+
+2. Check whether other websites or applications are
+   experiencing connectivity problems.
+
+3. Restart the VPN client.
+
+4. Reconnect to the corporate VPN.
+
+5. If the connection continues to drop, record the
+   approximate time and frequency of the disconnects.
+
+6. Contact the IT Service Desk if the problem continues.
+
+--------------------------------------------------
+ISSUE 4: VPN IS CONNECTED BUT COMPANY APPLICATIONS
+ARE NOT ACCESSIBLE
+--------------------------------------------------
+
+Symptoms:
+- VPN shows as connected.
+- Company applications cannot be accessed.
+
+Troubleshooting Steps:
+
+1. Verify that the VPN connection is still active.
+
+2. Disconnect and reconnect to the VPN.
+
+3. Close and reopen the affected company application.
+
+4. Try accessing the application again.
+
+5. If the application remains inaccessible, record the
+   application name and any error message displayed.
+
+6. Contact the IT Service Desk for further investigation.
+
+--------------------------------------------------
+SECURITY GUIDELINES
+--------------------------------------------------
+
+- Never share your password with the Service Desk Agent.
+- Never provide MFA codes or approval codes.
+- Do not disable corporate security controls.
+- Do not install unapproved VPN software.
+- Follow only approved corporate VPN procedures.
+
+--------------------------------------------------
+ESCALATION
+--------------------------------------------------
+
+Escalate to the IT Service Desk when:
+
+- VPN authentication continues to fail.
+- VPN repeatedly disconnects.
+- VPN connects but multiple corporate applications
+  remain inaccessible.
+- The VPN client displays an unknown or unexpected error.
+- The documented troubleshooting steps do not resolve
+  the problem.

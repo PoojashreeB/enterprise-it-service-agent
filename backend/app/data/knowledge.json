@@ -1,0 +1,50 @@
+[
+  {
+    "id": "outlook_0",
+    "category": "outlook",
+    "source": "outlook_troubleshooting.txt",
+    "content": "TITLE: Outlook Troubleshooting Guide\n\nCATEGORY: OUTLOOK\n\nPURPOSE:\nProvide standard troubleshooting guidance for common\ncorporate Outlook issues.\n\nISSUE 1: OUTLOOK IS NOT OPENING\n\nTroubleshooting Steps:\n\n1. Close Outlook completely.\n2. Wait a few seconds and try opening Outlook again.\n3. Restart the computer.\n4. Open Outlook again after the restart.\n5. If Outlook still does not open, contact the IT Service Desk.\n\nISSUE 2: CANNOT SEND OR RECEIVE EMAILS\n\nTroubleshooting Steps:\n\n1. Verify that the device has an active internet connection.\n2. Check whether Outlook shows \"Disconnected\" or \"Working Offline\".\n3. If Outlook is offline, reconnect to the network.\n4. Restart Outlook.\n5. Try sending a test email.\n6. If the problem continues, contact the IT Service Desk.\n\nISSUE 3: OUTLOOK IS NOT SYNCING\n\nTroubleshooting Steps:\n\n1. Verify the internet connection.\n2. Restart Outlook.\n3. Check whether Outlook is showing a synchronization error.\n4. Allow some time for synchronization to complete.\n5. If synchronization continues to fail, contact the IT Service Desk.\n\nSECURITY GUIDELINES"
+  },
+  {
+    "id": "outlook_1",
+    "category": "outlook",
+    "source": "outlook_troubleshooting.txt",
+    "content": "- Never share your password.\n- Never share MFA codes.\n- Do not install unofficial Outlook plugins.\n- Do not disable corporate security controls."
+  },
+  {
+    "id": "password_0",
+    "category": "password",
+    "source": "password_reset.txt",
+    "content": "TITLE: Password Reset Guidance\n\nCATEGORY: PASSWORD_RESET\n\nPURPOSE:\nProvide safe guidance for users who need to reset their\ncorporate password.\n\nFORGOTTEN PASSWORD\n\n1. Open the organization's approved password reset portal.\n2. Select the password reset option.\n3. Enter the required corporate account information.\n4. Complete the organization's identity verification process.\n5. Complete MFA verification if requested.\n6. Create a new password according to corporate password requirements.\n7. Sign in again using the new password.\n\nPASSWORD EXPIRED\n\n1. Use the organization's approved password management portal.\n2. Follow the password change instructions.\n3. Complete identity verification if requested.\n4. Create a new password that satisfies corporate requirements.\n5. Sign in again using the new password.\n\nPASSWORD RESET FAILURE\n\nIf the password reset process fails:\n\n1. Record the error message.\n2. Verify that the correct corporate account is being used.\n3. Retry using the approved password reset portal.\n4. Contact the IT Service Desk if the problem continues.\n\nSECURITY GUIDELINES"
+  },
+  {
+    "id": "password_1",
+    "category": "password",
+    "source": "password_reset.txt",
+    "content": "- Never share your password with anyone.\n- Never provide MFA codes to another person.\n- Do not send passwords through email or chat.\n- Do not use unauthorized password reset websites."
+  },
+  {
+    "id": "software_0",
+    "category": "software",
+    "source": "software_installation.txt",
+    "content": "TITLE: Software Installation Guidance\n\nCATEGORY: SOFTWARE_INSTALLATION\n\nPURPOSE:\nProvide guidance for installing approved corporate software.\n\nGENERAL SOFTWARE INSTALLATION\n\n1. Confirm that the requested software is approved by the organization.\n2. Use the organization's approved software portal or installation method.\n3. Search for the required application.\n4. Select the approved version.\n5. Start the installation.\n6. Follow the installation instructions.\n7. Restart the application or computer if required.\n8. Verify that the software launches successfully.\n\nINSTALLATION FAILURE\n\nIf installation fails:\n\n1. Record the exact error message.\n2. Verify that the device has an active network connection.\n3. Verify that sufficient storage is available.\n4. Retry the installation using the approved installation method.\n5. If the installation continues to fail, contact the IT Service Desk.\n\nSECURITY GUIDELINES\n\n- Do not install unauthorized software.\n- Do not download software from unknown websites.\n- Do not bypass corporate security controls.\n- Do not use pirated or modified software.\n- Use only organization-approved installation sources."
+  },
+  {
+    "id": "vpn_0",
+    "category": "vpn",
+    "source": "vpn_troubleshooting.txt",
+    "content": "TITLE: VPN Troubleshooting Guide\n\nCATEGORY: VPN\n\nPURPOSE:\nThis guide provides standard troubleshooting steps for common\ncorporate VPN connectivity problems.\n\nISSUE 1: VPN IS NOT CONNECTING\n\nSymptoms:\n- VPN client does not connect.\n- VPN connection fails.\n- User cannot access company applications.\n\nTroubleshooting Steps:\n\n1. Verify that the device has an active internet connection.\n\n2. Open a browser and verify that normal websites can be accessed.\n\n3. Close the corporate VPN application completely.\n\n4. Reopen the VPN application.\n\n5. Sign in using the corporate credentials.\n\n6. If Multi-Factor Authentication (MFA) is requested,\n   complete the MFA verification.\n\n7. Try connecting to the VPN again.\n\n8. If the VPN still does not connect, note the exact\n   error message displayed by the VPN client.\n\nISSUE 2: VPN AUTHENTICATION FAILURE"
+  },
+  {
+    "id": "vpn_1",
+    "category": "vpn",
+    "source": "vpn_troubleshooting.txt",
+    "content": "Symptoms:\n- VPN displays an authentication error.\n- Corporate credentials are rejected.\n- MFA authentication fails.\n\nTroubleshooting Steps:\n\n1. Verify that the correct corporate username is being used.\n\n2. Verify that the password is correct.\n\n3. Check whether the corporate password has expired.\n\n4. Complete MFA authentication if prompted.\n\n5. Close and reopen the VPN client.\n\n6. Try authentication again.\n\n7. If authentication continues to fail, contact the IT\n   Service Desk for further assistance.\n\nISSUE 3: VPN KEEPS DISCONNECTING\n\nSymptoms:\n- VPN connects successfully but disconnects frequently.\n- Connection drops while using company applications.\n\nTroubleshooting Steps:\n\n1. Verify that the internet connection is stable.\n\n2. Check whether other websites or applications are\n   experiencing connectivity problems.\n\n3. Restart the VPN client.\n\n4. Reconnect to the corporate VPN.\n\n5. If the connection continues to drop, record the\n   approximate time and frequency of the disconnects.\n\n6. Contact the IT Service Desk if the problem continues.\n\nISSUE 4: VPN IS CONNECTED BUT COMPANY APPLICATIONS\nARE NOT ACCESSIBLE"
+  },
+  {
+    "id": "vpn_2",
+    "category": "vpn",
+    "source": "vpn_troubleshooting.txt",
+    "content": "Symptoms:\n- VPN shows as connected.\n- Company applications cannot be accessed.\n\nTroubleshooting Steps:\n\n1. Verify that the VPN connection is still active.\n\n2. Disconnect and reconnect to the VPN.\n\n3. Close and reopen the affected company application.\n\n4. Try accessing the application again.\n\n5. If the application remains inaccessible, record the\n   application name and any error message displayed.\n\n6. Contact the IT Service Desk for further investigation.\n\nSECURITY GUIDELINES\n\n- Never share your password with the Service Desk Agent.\n- Never provide MFA codes or approval codes.\n- Do not disable corporate security controls.\n- Do not install unapproved VPN software.\n- Follow only approved corporate VPN procedures.\n\nESCALATION\n\nEscalate to the IT Service Desk when:\n\n- VPN authentication continues to fail.\n- VPN repeatedly disconnects.\n- VPN connects but multiple corporate applications\n  remain inaccessible.\n- The VPN client displays an unknown or unexpected error.\n- The documented troubleshooting steps do not resolve\n  the problem."
+  }
+]

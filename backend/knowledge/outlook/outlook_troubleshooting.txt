@@ -1,0 +1,53 @@
+TITLE: Outlook Troubleshooting Guide
+
+CATEGORY: OUTLOOK
+
+PURPOSE:
+Provide standard troubleshooting guidance for common
+corporate Outlook issues.
+
+--------------------------------------------------
+ISSUE 1: OUTLOOK IS NOT OPENING
+--------------------------------------------------
+
+Troubleshooting Steps:
+
+1. Close Outlook completely.
+2. Wait a few seconds and try opening Outlook again.
+3. Restart the computer.
+4. Open Outlook again after the restart.
+5. If Outlook still does not open, contact the IT Service Desk.
+
+--------------------------------------------------
+ISSUE 2: CANNOT SEND OR RECEIVE EMAILS
+--------------------------------------------------
+
+Troubleshooting Steps:
+
+1. Verify that the device has an active internet connection.
+2. Check whether Outlook shows "Disconnected" or "Working Offline".
+3. If Outlook is offline, reconnect to the network.
+4. Restart Outlook.
+5. Try sending a test email.
+6. If the problem continues, contact the IT Service Desk.
+
+--------------------------------------------------
+ISSUE 3: OUTLOOK IS NOT SYNCING
+--------------------------------------------------
+
+Troubleshooting Steps:
+
+1. Verify the internet connection.
+2. Restart Outlook.
+3. Check whether Outlook is showing a synchronization error.
+4. Allow some time for synchronization to complete.
+5. If synchronization continues to fail, contact the IT Service Desk.
+
+--------------------------------------------------
+SECURITY GUIDELINES
+--------------------------------------------------
+
+- Never share your password.
+- Never share MFA codes.
+- Do not install unofficial Outlook plugins.
+- Do not disable corporate security controls.
