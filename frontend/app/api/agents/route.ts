@@ -22,27 +22,49 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let backendResponse: Response;
+
   try {
-    const backendResponse = await fetch(`${BACKEND_URL}/service-desk`, {
+    backendResponse = await fetch(`${BACKEND_URL}/service-desk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
     });
-
-    const data = await backendResponse.json();
-
-    if (!backendResponse.ok) {
-      return NextResponse.json(
-        { error: data?.detail || "The service desk agent returned an error." },
-        { status: backendResponse.status }
-      );
-    }
-
-    return NextResponse.json(data);
-  } catch {
+  } catch (err) {
+    console.error("Failed to reach service desk backend:", err);
     return NextResponse.json(
       { error: "Could not reach the service desk agent backend." },
       { status: 502 }
     );
   }
+
+  const rawBody = await backendResponse.text();
+  let data: unknown;
+
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    console.error(
+      `Service desk backend returned non-JSON response (status ${backendResponse.status}):`,
+      rawBody
+    );
+    return NextResponse.json(
+      { error: "The service desk agent returned an unexpected response." },
+      { status: 502 }
+    );
+  }
+
+  if (!backendResponse.ok) {
+    const detail =
+      typeof data === "object" && data !== null && "detail" in data
+        ? (data as { detail?: string }).detail
+        : undefined;
+
+    return NextResponse.json(
+      { error: detail || "The service desk agent returned an error." },
+      { status: backendResponse.status }
+    );
+  }
+
+  return NextResponse.json(data);
 }
