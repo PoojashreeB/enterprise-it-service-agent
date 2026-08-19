@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { authHeader, backendFetch } from "@/lib/backend";
 
 export async function POST(request: NextRequest) {
-  let message: string;
+  const token = request.cookies.get("session")?.value;
+
+  if (!token) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  let body: { message?: string; conversation_id?: string };
 
   try {
-    const body = await request.json();
-    message = body.message;
+    body = await request.json();
   } catch {
     return NextResponse.json(
       { error: "Request body must be valid JSON." },
@@ -15,56 +19,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!message || typeof message !== "string") {
+  if (!body.message || typeof body.message !== "string") {
     return NextResponse.json(
       { error: "A non-empty 'message' string is required." },
       { status: 400 }
     );
   }
 
-  let backendResponse: Response;
+  const result = await backendFetch("/service-desk", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body: JSON.stringify({
+      message: body.message,
+      conversation_id: body.conversation_id ?? null,
+    }),
+  });
 
-  try {
-    backendResponse = await fetch(`${BACKEND_URL}/service-desk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-  } catch (err) {
-    console.error("Failed to reach service desk backend:", err);
-    return NextResponse.json(
-      { error: "Could not reach the service desk agent backend." },
-      { status: 502 }
-    );
-  }
-
-  const rawBody = await backendResponse.text();
-  let data: unknown;
-
-  try {
-    data = JSON.parse(rawBody);
-  } catch {
-    console.error(
-      `Service desk backend returned non-JSON response (status ${backendResponse.status}):`,
-      rawBody
-    );
-    return NextResponse.json(
-      { error: "The service desk agent returned an unexpected response." },
-      { status: 502 }
-    );
-  }
-
-  if (!backendResponse.ok) {
-    const detail =
-      typeof data === "object" && data !== null && "detail" in data
-        ? (data as { detail?: string }).detail
-        : undefined;
-
-    return NextResponse.json(
-      { error: detail || "The service desk agent returned an error." },
-      { status: backendResponse.status }
-    );
-  }
-
-  return NextResponse.json(data);
+  if (!result.ok) return result.response;
+  return NextResponse.json(result.data);
 }

@@ -9,8 +9,13 @@ class Settings(BaseSettings):
     app_name: str = "Enterprise IT Service Desk Agent"
     app_env: str = "development"
 
+    database_url: str
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24 * 7
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", ".env.local"),
         case_sensitive=False,
         extra="ignore"
     )
