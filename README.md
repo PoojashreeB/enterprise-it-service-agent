@@ -4,7 +4,8 @@ An AI-powered IT service desk agent. A FastAPI + LangGraph backend classifies
 incoming IT requests, assesses priority, and dynamically decides whether to
 answer from enterprise knowledge, ask a clarifying question, or raise a
 ticket — all driven by LLM reasoning rather than hardcoded rules. A Next.js
-chat frontend sits on top of it.
+chat frontend sits on top of it, gated behind email/password login, with
+conversation history persisted per user in Postgres.
 
 ## Project structure
 
@@ -19,6 +20,8 @@ data/       Source knowledge base content
 - Python 3.11+
 - Node.js 18+
 - An [OpenRouter](https://openrouter.ai/) API key (used to call the LLM)
+- A Postgres database (e.g. [Neon](https://neon.tech/), which is what the
+  deployed version uses via the Vercel marketplace integration)
 
 ## Backend setup
 
@@ -42,10 +45,15 @@ OPENROUTER_MODEL=your_model_id
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 APP_NAME=Enterprise IT Service Desk Agent
 APP_ENV=development
+
+DATABASE_URL=postgresql://user:password@host/dbname
+JWT_SECRET=a-long-random-string
 ```
 
-`OPENROUTER_API_KEY` and `OPENROUTER_MODEL` are required; the rest have
-sensible defaults if omitted.
+`OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `DATABASE_URL`, and `JWT_SECRET`
+are required; the rest have sensible defaults if omitted. Generate a
+`JWT_SECRET` with e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+Tables are created automatically on startup — no migration step needed.
 
 Run the API:
 
@@ -62,15 +70,37 @@ curl http://localhost:8000/
 
 ### API
 
+Auth (JSON body `{ "email": ..., "password": ... }`):
+
+```
+POST /auth/signup   -> { access_token, user }
+POST /auth/login    -> { access_token, user }
+GET  /auth/me        (Bearer token) -> user
+```
+
+Conversations (all require `Authorization: Bearer <access_token>`):
+
+```
+GET    /conversations           -> list of the caller's conversations
+POST   /conversations           -> create an empty conversation
+GET    /conversations/{id}      -> conversation + its messages
+DELETE /conversations/{id}
+```
+
+Chat (requires auth):
+
 ```
 POST /service-desk
+Authorization: Bearer <access_token>
 Content-Type: application/json
 
-{ "message": "My VPN is connected but I can't reach any company apps" }
+{ "message": "My VPN is connected but I can't reach any company apps", "conversation_id": null }
 ```
 
-Returns the full agent state, including `final_response`, `category`,
-`priority`, `decision`, and (if a ticket was raised) `ticket_number`.
+`conversation_id` is optional — omit it to start a new conversation. Returns
+the full agent state, including `final_response`, `category`, `priority`,
+`decision`, `conversation_id`, and (if a ticket was raised) `ticket_number`.
+The user message and agent response are both persisted to that conversation.
 
 ## Frontend setup
 
@@ -81,9 +111,13 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The frontend proxies
+Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to
+`/login` to sign up or sign in. The frontend proxies auth, conversation, and
 chat requests to the backend at the `BACKEND_URL` set in `.env.local`
 (defaults to `http://localhost:8000`), so the backend must be running first.
+The session is a JWT stored in an httpOnly cookie set by the frontend's own
+`/api/auth/*` routes; the frontend never talks to the backend directly from
+the browser.
 
 ## Running both together
 
