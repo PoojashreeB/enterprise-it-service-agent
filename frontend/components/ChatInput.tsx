@@ -24,7 +24,7 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-end gap-2 border-t border-slate-800 bg-slate-950 p-4"
+      className="flex items-end gap-2 border-t border-slate-200 bg-white p-4"
     >
       <textarea
         value={value}
@@ -38,7 +38,7 @@ export default function ChatInput({
         placeholder="Describe the IT issue you're experiencing..."
         rows={1}
         disabled={disabled}
-        className="flex-1 resize-none rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-blue-600 disabled:opacity-50"
+        className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
       />
       <button
         type="submit"

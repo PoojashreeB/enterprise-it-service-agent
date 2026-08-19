@@ -21,22 +21,22 @@ function DetailsPanel({ result }: { result: NonNullable<ChatMessageType["result"
     <div className="mt-2 text-xs">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="text-slate-400 hover:text-slate-200 underline underline-offset-2"
+        className="text-blue-600 hover:text-blue-800 underline underline-offset-2"
       >
         {open ? "Hide details" : "Show details"}
       </button>
 
       {open && (
-        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-lg bg-slate-900/60 p-3 text-slate-300">
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700">
           {result.decision && (
             <>
-              <dt className="text-slate-500">Outcome</dt>
+              <dt className="text-slate-400">Outcome</dt>
               <dd>{DECISION_LABEL[result.decision] ?? result.decision}</dd>
             </>
           )}
           {result.category && (
             <>
-              <dt className="text-slate-500">Category</dt>
+              <dt className="text-slate-400">Category</dt>
               <dd>
                 {result.category}
                 {result.subcategory ? ` — ${result.subcategory}` : ""}
@@ -45,13 +45,13 @@ function DetailsPanel({ result }: { result: NonNullable<ChatMessageType["result"
           )}
           {result.priority && (
             <>
-              <dt className="text-slate-500">Priority</dt>
+              <dt className="text-slate-400">Priority</dt>
               <dd>{result.priority}</dd>
             </>
           )}
           {result.ticket_number && (
             <>
-              <dt className="text-slate-500">Ticket</dt>
+              <dt className="text-slate-400">Ticket</dt>
               <dd className="font-mono">{result.ticket_number}</dd>
             </>
           )}
@@ -68,12 +68,12 @@ export default function ChatMessage({ message }: { message: ChatMessageType }) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+        className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
           isUser
             ? "bg-blue-600 text-white rounded-br-sm"
             : isError
-            ? "bg-red-950/60 text-red-300 border border-red-900 rounded-bl-sm"
-            : "bg-slate-800 text-slate-100 rounded-bl-sm"
+            ? "bg-red-50 text-red-700 border border-red-200 rounded-bl-sm"
+            : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"
         }`}
       >
         {message.content}

@@ -65,9 +65,9 @@ export default function Home() {
   }
 
   return (
-    <main className="flex h-screen flex-col bg-slate-950">
-      <header className="border-b border-slate-800 px-6 py-4">
-        <h1 className="text-lg font-semibold text-slate-100">
+    <main className="flex h-screen flex-col bg-slate-50">
+      <header className="border-b border-slate-200 bg-white px-6 py-4 shadow-sm">
+        <h1 className="text-lg font-semibold text-slate-900">
           Enterprise IT Service Desk
         </h1>
         <p className="text-xs text-slate-500">
@@ -82,7 +82,7 @@ export default function Home() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-sm bg-slate-800 px-4 py-3 text-sm text-slate-400">
+            <div className="rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400 shadow-sm">
               <span className="inline-flex gap-1">
                 <span className="animate-bounce [animation-delay:-0.3s]">.</span>
                 <span className="animate-bounce [animation-delay:-0.15s]">.</span>
