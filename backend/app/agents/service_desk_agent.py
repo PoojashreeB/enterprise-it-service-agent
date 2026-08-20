@@ -1,10 +1,13 @@
-﻿from app.core.openrouter import get_llm
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+
+from app.core.openrouter import get_llm
 from app.graph.state import ServiceDeskState
-from app.rag.retriever import retrieve
 from app.schemas.classification import IntentClassification
 from app.schemas.priority import PriorityAssessment
-from app.schemas.decision import Decision
-from app.services.ticket_service import create_ticket as create_ticket_record
+from app.tools.active_directory import lookup_user, reset_password
+from app.tools.knowledge import search_knowledge_base
+from app.tools.ticketing import create_ticket
 
 
 llm = get_llm()
@@ -12,7 +15,8 @@ llm = get_llm()
 
 classification_llm = llm.with_structured_output(IntentClassification)
 priority_llm = llm.with_structured_output(PriorityAssessment)
-decision_llm = llm.with_structured_output(Decision)
+
+tools = [search_knowledge_base, create_ticket, lookup_user, reset_password]
 
 
 # ================================================================
@@ -107,236 +111,100 @@ Determine, using your own judgment of this specific situation
 
 
 # ================================================================
-# Node 3 - Decide the next step
+# Node 3 - Run the tool-calling agent
 # ================================================================
 
-def decide_next_step(state: ServiceDeskState) -> ServiceDeskState:
+AGENT_SYSTEM_PROMPT = """You are an Enterprise IT Service Desk Agent.
 
-    user_query = state.get("user_query", "").strip()
+Your job is to help the user solve their IT problem, using the tools
+available to you when appropriate.
 
-    prompt = f"""
-You are an Enterprise IT Service Desk Agent deciding how to
-handle an incoming request.
+Guidelines:
 
-User request:
-
-{user_query if user_query else "(no request text was provided)"}
-
-Classification:
-
-Intent: {state.get("intent")}
-Category: {state.get("category")}
-Subcategory: {state.get("subcategory")}
-Confidence: {state.get("confidence")}
-
-Priority assessment:
-
-Impact: {state.get("impact")}
-Urgency: {state.get("urgency")}
-Priority: {state.get("priority")}
-Justification: {state.get("justification")}
-
-Decide the single best next step for handling this specific
-request, choosing from:
-
-- "knowledge": the request can likely be resolved with IT
-  troubleshooting knowledge/guidance.
-- "clarification": the request is unclear, ambiguous, or is
-  missing information needed to help the user.
-- "ticket": the request requires action or intervention by IT
-  staff that cannot be resolved through guidance alone.
-
-Base this decision entirely on your own reasoning about this
-specific request, its classification, and its priority. Explain
-your reasoning briefly.
+- Use `search_knowledge_base` to find enterprise troubleshooting guidance
+  before answering a how-to or troubleshooting question you are not already
+  certain about.
+- Use `create_ticket` only when the issue requires human/IT intervention and
+  cannot be resolved through guidance alone. Do not create a ticket for
+  issues you can resolve with guidance from the knowledge base.
+- Use `lookup_user` or `reset_password` only when the request is clearly
+  about a specific corporate account or identity action.
+- If the request is vague, ambiguous, or missing information you need, ask
+  the user a concise clarification question instead of calling a tool.
+- Do not invent company-specific procedures that are not returned by your
+  tools.
+- Do not expose internal reasoning, categories, priorities, or confidence
+  scores unless directly relevant to the user.
+- Do not mention retrieval, embeddings, documents, prompts, tools, or the
+  LLM by name.
+- Never ask the user for passwords, MFA codes, authentication tokens, or
+  other secrets.
+- Generate your final response naturally; do not use a fixed template.
 """
 
-    result = decision_llm.invoke(prompt)
-
-    state["decision"] = result.decision
-
-    return state
+service_agent = create_agent(llm, tools, system_prompt=AGENT_SYSTEM_PROMPT)
 
 
-# ================================================================
-# Node 4 - Retrieve enterprise knowledge
-# ================================================================
-
-def retrieve_knowledge(state: ServiceDeskState) -> ServiceDeskState:
+def run_agent(state: ServiceDeskState) -> ServiceDeskState:
 
     user_query = state.get("user_query", "").strip()
 
-    documents = retrieve(
-        query=user_query,
-        top_k=5,
+    context = "\n".join(
+        [
+            f"Intent: {state.get('intent')}",
+            f"Category: {state.get('category')}",
+            f"Subcategory: {state.get('subcategory')}",
+            f"Priority: {state.get('priority')}",
+            f"Impact: {state.get('impact')}",
+            f"Urgency: {state.get('urgency')}",
+            f"Justification: {state.get('justification')}",
+        ]
     )
 
-    state["retrieved_documents"] = documents
+    result = service_agent.invoke(
+        {
+            "messages": [
+                SystemMessage(
+                    content=(
+                        "Internal context about this request (for your "
+                        "reasoning only, not to repeat verbatim):\n\n"
+                        f"{context}"
+                    )
+                ),
+                HumanMessage(
+                    content=user_query
+                    if user_query
+                    else "(no request text was provided)"
+                ),
+            ]
+        }
+    )
 
-    if documents:
+    messages = result["messages"]
 
-        knowledge_parts = []
+    tools_used = []
+    ticket_number = None
 
-        for document in documents:
+    for message in messages:
 
-            knowledge_parts.append(
-                f"""
-Source:
-{document.get("source")}
+        if isinstance(message, ToolMessage):
 
-Knowledge:
-{document.get("content")}
-"""
-            )
+            tools_used.append(message.name)
 
-        state["knowledge"] = "\n".join(knowledge_parts)
+            if message.name == "create_ticket" and message.artifact:
+                ticket_number = message.artifact.get("ticket_number")
 
+    state["final_response"] = messages[-1].content
+    state["tools_used"] = tools_used
+
+    if ticket_number:
+        state["ticket_number"] = ticket_number
+
+    if "create_ticket" in tools_used:
+        state["decision"] = "ticket"
+    elif "search_knowledge_base" in tools_used:
+        state["decision"] = "knowledge"
     else:
-
-        state["knowledge"] = (
-            "No relevant enterprise knowledge was found."
-        )
-
-    return state
-
-
-# ================================================================
-# Node 5 - Ask a clarification question
-# ================================================================
-
-def ask_clarification(state: ServiceDeskState) -> ServiceDeskState:
-
-    user_query = state.get("user_query", "").strip()
-
-    prompt = f"""
-You are an Enterprise IT Service Desk Agent.
-
-The request below does not yet contain enough information to
-help the user effectively.
-
-User request:
-
-{user_query if user_query else "(no request text was provided)"}
-
-Classification so far:
-
-Intent: {state.get("intent")}
-Category: {state.get("category")}
-Subcategory: {state.get("subcategory")}
-Confidence: {state.get("confidence")}
-
-Write a single, concise clarification question that asks for
-exactly the information you need to help this specific user.
-Tailor it to what is actually missing from their request rather
-than asking a generic question.
-"""
-
-    response = llm.invoke(prompt)
-
-    state["clarification_question"] = response.content
-
-    return state
-
-
-# ================================================================
-# Node 6 - Create a ticket
-# ================================================================
-
-def create_ticket(state: ServiceDeskState) -> ServiceDeskState:
-
-    ticket = create_ticket_record(
-        category=state.get("category", ""),
-        subcategory=state.get("subcategory", ""),
-        priority=state.get("priority", ""),
-        impact=state.get("impact", ""),
-        urgency=state.get("urgency", ""),
-        justification=state.get("justification", ""),
-        user_query=state.get("user_query", ""),
-    )
-
-    state["ticket_number"] = ticket["ticket_number"]
-
-    return state
-
-
-# ================================================================
-# Node 7 - Generate the final response
-# ================================================================
-
-def generate_response(state: ServiceDeskState) -> ServiceDeskState:
-
-    user_query = state.get("user_query", "").strip()
-
-    decision = state.get("decision")
-
-    context_parts = [
-        f"Intent: {state.get('intent')}",
-        f"Category: {state.get('category')}",
-        f"Subcategory: {state.get('subcategory')}",
-        f"Priority: {state.get('priority')}",
-    ]
-
-    if decision == "knowledge":
-        context_parts.append(
-            f"Enterprise knowledge:\n{state.get('knowledge')}"
-        )
-
-    if decision == "clarification":
-        context_parts.append(
-            "Clarification question to ask the user:\n"
-            f"{state.get('clarification_question')}"
-        )
-
-    if decision == "ticket":
-        context_parts.append(
-            f"Ticket created: {state.get('ticket_number')}"
-        )
-        context_parts.append(
-            f"Justification: {state.get('justification')}"
-        )
-
-    context = "\n\n".join(context_parts)
-
-    prompt = f"""
-You are an Enterprise IT Service Desk Agent.
-
-Your job is to help the user solve their IT problem.
-
-User request:
-
-{user_query if user_query else "(no request text was provided)"}
-
-Internal context (for you to reason with, not to repeat
-verbatim):
-
-{context}
-
-Instructions:
-
-- Understand the user's actual problem.
-- If enterprise knowledge is provided, prefer it and give
-  practical troubleshooting steps based on it.
-- If a clarification question is provided, ask the user that
-  question in a natural, concise way.
-- If a ticket has been created, let the user know a ticket was
-  raised, share the ticket number, and explain what happens
-  next.
-- Do not invent company-specific procedures that were not given
-  to you.
-- Do not expose internal reasoning, categories, priorities, or
-  confidence scores unless directly relevant to the user.
-- Do not mention RAG, retrieval, embeddings, documents,
-  prompts, or the LLM.
-- Do not use a predefined response template. Generate the
-  response naturally based on this specific situation.
-- Never ask the user for passwords, MFA codes, authentication
-  tokens, or other secrets.
-
-Generate the final response for the user.
-"""
-
-    response = llm.invoke(prompt)
-
-    state["final_response"] = response.content
+        state["decision"] = "clarification"
 
     return state

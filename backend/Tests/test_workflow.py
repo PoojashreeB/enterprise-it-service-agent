@@ -1,41 +1,12 @@
 from types import SimpleNamespace
 
-import pytest
+from langchain_core.messages import AIMessage, ToolMessage
 
 from app.agents import service_desk_agent
-from app.graph.workflow import build_service_desk_graph, route_decision
+from app.graph.workflow import build_service_desk_graph
 from app.schemas.classification import IntentClassification
-from app.schemas.decision import Decision
 from app.schemas.priority import PriorityAssessment
 
-
-# ================================================================
-# route_decision
-# ================================================================
-
-@pytest.mark.parametrize(
-    "decision_value, expected_node",
-    [
-        ("knowledge", "retrieve_knowledge"),
-        ("clarification", "ask_clarification"),
-        ("ticket", "create_ticket"),
-    ],
-)
-def test_route_decision_routes_to_expected_node(decision_value, expected_node):
-    assert route_decision({"decision": decision_value}) == expected_node
-
-
-def test_route_decision_falls_back_to_clarification_when_missing():
-    assert route_decision({}) == "ask_clarification"
-
-
-def test_route_decision_falls_back_to_clarification_when_unrecognized():
-    assert route_decision({"decision": "something_unexpected"}) == "ask_clarification"
-
-
-# ================================================================
-# Full graph execution
-# ================================================================
 
 def _patch_classification(monkeypatch, **overrides):
     defaults = dict(
@@ -67,71 +38,70 @@ def _patch_priority(monkeypatch, **overrides):
     )
 
 
-def _patch_decision(monkeypatch, decision_value):
+def _patch_agent(monkeypatch, messages):
     monkeypatch.setattr(
         service_desk_agent,
-        "decision_llm",
-        SimpleNamespace(
-            invoke=lambda prompt: Decision(decision=decision_value, reason="Because reasons.")
-        ),
-    )
-
-
-def _patch_llm(monkeypatch, content):
-    monkeypatch.setattr(
-        service_desk_agent,
-        "llm",
-        SimpleNamespace(invoke=lambda prompt: SimpleNamespace(content=content)),
+        "service_agent",
+        SimpleNamespace(invoke=lambda payload: {"messages": messages}),
     )
 
 
 def test_graph_knowledge_path(monkeypatch):
     _patch_classification(monkeypatch)
     _patch_priority(monkeypatch)
-    _patch_decision(monkeypatch, "knowledge")
-    monkeypatch.setattr(
-        service_desk_agent,
-        "retrieve",
-        lambda query, top_k: [{"source": "kb-vpn", "content": "Restart your VPN client."}],
+    _patch_agent(
+        monkeypatch,
+        [
+            ToolMessage(
+                content="Restart your VPN client.",
+                name="search_knowledge_base",
+                tool_call_id="call_1",
+            ),
+            AIMessage(content="Try restarting your VPN client and reconnecting."),
+        ],
     )
-    _patch_llm(monkeypatch, "Try restarting your VPN client and reconnecting.")
 
     graph = build_service_desk_graph()
     result = graph.invoke({"user_query": "VPN is not connecting"})
 
     assert result["decision"] == "knowledge"
-    assert "Restart your VPN client." in result["knowledge"]
+    assert result["tools_used"] == ["search_knowledge_base"]
     assert result["final_response"] == "Try restarting your VPN client and reconnecting."
     assert "ticket_number" not in result
-    assert "clarification_question" not in result
 
 
 def test_graph_clarification_path(monkeypatch):
     _patch_classification(monkeypatch, confidence=0.2)
     _patch_priority(monkeypatch)
-    _patch_decision(monkeypatch, "clarification")
-    _patch_llm(monkeypatch, "Could you tell me which application is affected?")
+    _patch_agent(
+        monkeypatch,
+        [AIMessage(content="Could you tell me which application is affected?")],
+    )
 
     graph = build_service_desk_graph()
     result = graph.invoke({"user_query": "It doesn't work"})
 
     assert result["decision"] == "clarification"
-    assert result["clarification_question"] == "Could you tell me which application is affected?"
+    assert result["tools_used"] == []
     assert result["final_response"] == "Could you tell me which application is affected?"
     assert "ticket_number" not in result
-    assert "knowledge" not in result
 
 
 def test_graph_ticket_path(monkeypatch):
     _patch_classification(monkeypatch)
     _patch_priority(monkeypatch, priority="P1", impact="High", urgency="High")
-    _patch_decision(monkeypatch, "ticket")
-    monkeypatch.setattr(
-        service_desk_agent,
-        "create_ticket_record",
-        lambda **kwargs: {"ticket_number": "NET-20260101000000-ABC123"},
+    _patch_agent(
+        monkeypatch,
+        [
+            ToolMessage(
+                content="Ticket created.",
+                name="create_ticket",
+                tool_call_id="call_1",
+                artifact={"ticket_number": "NET-20260101000000-ABC123"},
+            ),
+            AIMessage(content="A ticket has been raised for you: NET-20260101000000-ABC123."),
+        ],
     )
-    _patch_llm(monkeypatch, "A ticket has been raised for you: NET-20260101000000-ABC123.")
 
     graph = build_service_desk_graph()
     result = graph.invoke({"user_query": "VPN is completely down for the whole office"})
@@ -139,5 +109,16 @@ def test_graph_ticket_path(monkeypatch):
     assert result["decision"] == "ticket"
     assert result["ticket_number"] == "NET-20260101000000-ABC123"
     assert "NET-20260101000000-ABC123" in result["final_response"]
-    assert "knowledge" not in result
-    assert "clarification_question" not in result
+
+
+def test_graph_carries_classification_and_priority_into_final_state(monkeypatch):
+    _patch_classification(monkeypatch, category="Network", subcategory="VPN")
+    _patch_priority(monkeypatch, priority="P2")
+    _patch_agent(monkeypatch, [AIMessage(content="Response")])
+
+    graph = build_service_desk_graph()
+    result = graph.invoke({"user_query": "VPN issue"})
+
+    assert result["category"] == "Network"
+    assert result["subcategory"] == "VPN"
+    assert result["priority"] == "P2"

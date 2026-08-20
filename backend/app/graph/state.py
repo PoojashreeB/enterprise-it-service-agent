@@ -18,15 +18,9 @@ class ServiceDeskState(TypedDict, total=False):
     priority: str
     justification: str
 
-    # Decision
+    # Agent execution
     decision: str
-
-    # RAG
-    knowledge: str
-    retrieved_documents: list
-
-    # Clarification
-    clarification_question: str
+    tools_used: list
 
     # Ticket
     ticket_number: str

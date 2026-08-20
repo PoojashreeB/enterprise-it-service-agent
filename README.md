@@ -1,11 +1,13 @@
 # Enterprise IT Service Desk Agent
 
 An AI-powered IT service desk agent. A FastAPI + LangGraph backend classifies
-incoming IT requests, assesses priority, and dynamically decides whether to
-answer from enterprise knowledge, ask a clarifying question, or raise a
-ticket — all driven by LLM reasoning rather than hardcoded rules. A Next.js
-chat frontend sits on top of it, gated behind email/password login, with
-conversation history persisted per user in Postgres.
+incoming IT requests, assesses priority, and then hands off to a tool-calling
+agent that decides for itself whether to search the enterprise knowledge base,
+create a ticket, look up an Active Directory account, or simply ask a
+clarifying question — calling tools autonomously rather than following a
+hardcoded decision tree. A Next.js chat frontend sits on top of it, gated
+behind email/password login, with conversation history persisted per user in
+Postgres.
 
 ## Project structure
 
