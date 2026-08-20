@@ -1,10 +1,45 @@
 from types import SimpleNamespace
 
+import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 
 from app.agents import service_desk_agent
 from app.schemas.classification import IntentClassification
 from app.schemas.priority import PriorityAssessment
+
+
+# ================================================================
+# _invoke_with_retry
+# ================================================================
+
+def test_invoke_with_retry_retries_transient_failures_then_succeeds():
+    calls = {"count": 0}
+
+    class FlakyRunnable:
+        def invoke(self, input_):
+            calls["count"] += 1
+            if calls["count"] < 3:
+                raise ValueError("Upstream error: Service temporarily overloaded")
+            return "ok"
+
+    result = service_desk_agent._invoke_with_retry(FlakyRunnable(), "prompt")
+
+    assert result == "ok"
+    assert calls["count"] == 3
+
+
+def test_invoke_with_retry_gives_up_after_max_attempts():
+    calls = {"count": 0}
+
+    class AlwaysFailingRunnable:
+        def invoke(self, input_):
+            calls["count"] += 1
+            raise ValueError("permanent failure")
+
+    with pytest.raises(ValueError):
+        service_desk_agent._invoke_with_retry(AlwaysFailingRunnable(), "prompt")
+
+    assert calls["count"] == 3
 
 
 # ================================================================

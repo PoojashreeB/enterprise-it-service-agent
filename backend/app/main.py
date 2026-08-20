@@ -1,7 +1,9 @@
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,8 @@ from app.api.deps import get_current_user
 from app.core.db import Base, engine, get_db
 from app.graph.workflow import build_service_desk_graph
 from app.models.database import Conversation, Message, User
+
+logger = logging.getLogger(__name__)
 
 graph = build_service_desk_graph()
 
@@ -29,6 +33,21 @@ app = FastAPI(
 
 app.include_router(auth_router.router)
 app.include_router(conversations_router.router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception(
+        "Unhandled exception while processing %s %s", request.method, request.url.path
+    )
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "detail": (
+                "Something went wrong processing your request. Please try again."
+            )
+        },
+    )
 
 
 class ServiceDeskRequest(BaseModel):

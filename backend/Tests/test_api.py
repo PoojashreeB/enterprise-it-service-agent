@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+from fastapi.testclient import TestClient
+
 import app.main as main_module
 
 
@@ -287,3 +289,31 @@ def test_service_desk_with_another_users_conversation_returns_404(client, signup
     )
 
     assert response.status_code == 404
+
+
+# ================================================================
+# Unhandled exceptions
+# ================================================================
+
+def test_unhandled_exception_returns_json_error(client, auth_headers, monkeypatch):
+    def raise_error(state):
+        raise ValueError("Upstream error: Service temporarily overloaded")
+
+    monkeypatch.setattr(main_module, "graph", SimpleNamespace(invoke=raise_error))
+
+    # A real ASGI server (or a browser hitting the deployed API) only ever
+    # sees the JSON response our handler sends - it has no way to "re-raise"
+    # the exception. TestClient's default raise_server_exceptions=True exists
+    # purely to surface bugs during test authoring, so it's disabled here to
+    # observe the same response a real client would get.
+    lenient_client = TestClient(main_module.app, raise_server_exceptions=False)
+
+    response = lenient_client.post(
+        "/service-desk",
+        json={"message": "Hello"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 500
+    assert response.headers["content-type"].startswith("application/json")
+    assert "detail" in response.json()

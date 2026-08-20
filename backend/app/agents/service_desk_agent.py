@@ -1,5 +1,6 @@
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.core.openrouter import get_llm
 from app.graph.state import ServiceDeskState
@@ -17,6 +18,18 @@ classification_llm = llm.with_structured_output(IntentClassification)
 priority_llm = llm.with_structured_output(PriorityAssessment)
 
 tools = [search_knowledge_base, create_ticket, lookup_user, reset_password]
+
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=4),
+    reraise=True,
+)
+def _invoke_with_retry(runnable, input_):
+    """Invoke an LLM/agent runnable, retrying on transient upstream errors
+    (e.g. a model provider being temporarily overloaded).
+    """
+    return runnable.invoke(input_)
 
 
 # ================================================================
@@ -52,7 +65,7 @@ User request:
 {user_query if user_query else "(no request text was provided)"}
 """
 
-    result = classification_llm.invoke(prompt)
+    result = _invoke_with_retry(classification_llm, prompt)
 
     state["intent"] = result.intent
     state["category"] = result.category
@@ -100,7 +113,7 @@ Determine, using your own judgment of this specific situation
   priority.
 """
 
-    result = priority_llm.invoke(prompt)
+    result = _invoke_with_retry(priority_llm, prompt)
 
     state["impact"] = result.impact
     state["urgency"] = result.urgency
@@ -161,7 +174,8 @@ def run_agent(state: ServiceDeskState) -> ServiceDeskState:
         ]
     )
 
-    result = service_agent.invoke(
+    result = _invoke_with_retry(
+        service_agent,
         {
             "messages": [
                 SystemMessage(
