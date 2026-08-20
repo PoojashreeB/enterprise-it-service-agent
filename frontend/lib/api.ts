@@ -1,4 +1,4 @@
-import { Conversation, ConversationDetail, User } from "./types";
+import { Conversation, ConversationDetail, Ticket, User } from "./types";
 
 export interface ServiceDeskResult {
   user_query?: string;
@@ -88,4 +88,23 @@ export async function fetchConversation(id: string): Promise<ConversationDetail>
 export async function deleteConversation(id: string): Promise<void> {
   const response = await fetch(`/api/conversations/${id}`, { method: "DELETE" });
   await parseOrThrow<{ ok: boolean }>(response);
+}
+
+export async function fetchTickets(): Promise<Ticket[]> {
+  const response = await fetch("/api/tickets");
+  return parseOrThrow<Ticket[]>(response);
+}
+
+export async function createTicket(payload: {
+  category: string;
+  subcategory: string;
+  priority: string;
+  summary: string;
+}): Promise<Ticket> {
+  const response = await fetch("/api/tickets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return parseOrThrow<Ticket>(response);
 }

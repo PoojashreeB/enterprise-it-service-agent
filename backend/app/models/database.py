@@ -26,6 +26,9 @@ class User(Base):
     conversations: Mapped[list["Conversation"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    tickets: Mapped[list["Ticket"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Conversation(Base):
@@ -58,3 +61,26 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     conversation: Mapped["Conversation"] = relationship(back_populates="messages")
+
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    conversation_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("conversations.id"), nullable=True, index=True
+    )
+    ticket_number: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(255), default="")
+    subcategory: Mapped[str] = mapped_column(String(255), default="")
+    priority: Mapped[str] = mapped_column(String(10), default="")
+    impact: Mapped[str] = mapped_column(Text, default="")
+    urgency: Mapped[str] = mapped_column(Text, default="")
+    justification: Mapped[str] = mapped_column(Text, default="")
+    summary: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(20), default="open")
+    source: Mapped[str] = mapped_column(String(20), default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    user: Mapped["User"] = relationship(back_populates="tickets")

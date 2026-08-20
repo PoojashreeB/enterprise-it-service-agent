@@ -36,3 +36,18 @@ export interface ConversationMessage {
 export interface ConversationDetail extends Conversation {
   messages: ConversationMessage[];
 }
+
+export interface Ticket {
+  id: string;
+  ticket_number: string;
+  category: string;
+  subcategory: string;
+  priority: string;
+  impact: string;
+  urgency: string;
+  justification: string;
+  summary: string;
+  status: string;
+  source: "agent" | "manual";
+  created_at: string;
+}

@@ -9,10 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.api import auth as auth_router
 from app.api import conversations as conversations_router
+from app.api import tickets as tickets_router
 from app.api.deps import get_current_user
 from app.core.db import Base, engine, get_db
 from app.graph.workflow import build_service_desk_graph
-from app.models.database import Conversation, Message, User
+from app.models.database import Conversation, Message, Ticket, User
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ app = FastAPI(
 
 app.include_router(auth_router.router)
 app.include_router(conversations_router.router)
+app.include_router(tickets_router.router)
 
 
 @app.exception_handler(Exception)
@@ -114,6 +116,26 @@ def service_desk(
             },
         )
     )
+
+    ticket_artifact = result.get("ticket")
+    if ticket_artifact:
+        db.add(
+            Ticket(
+                user_id=current_user.id,
+                conversation_id=conversation.id,
+                ticket_number=ticket_artifact.get("ticket_number", ""),
+                category=ticket_artifact.get("category", ""),
+                subcategory=ticket_artifact.get("subcategory", ""),
+                priority=ticket_artifact.get("priority", ""),
+                impact=ticket_artifact.get("impact", ""),
+                urgency=ticket_artifact.get("urgency", ""),
+                justification=ticket_artifact.get("justification", ""),
+                summary=ticket_artifact.get("summary", ""),
+                status="open",
+                source="agent",
+            )
+        )
+
     conversation.updated_at = datetime.now(timezone.utc)
     db.commit()
 

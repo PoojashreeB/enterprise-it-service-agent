@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Conversation, User } from "@/lib/types";
 
 export default function Sidebar({
@@ -58,7 +59,14 @@ export default function Sidebar({
       </div>
 
       <div className="border-t border-slate-200 p-4">
-        <p className="truncate text-xs text-slate-500" title={user.email}>
+        <Link
+          href="/tickets"
+          className="block text-sm text-slate-600 hover:text-slate-900"
+        >
+          View tickets
+        </Link>
+
+        <p className="mt-3 truncate text-xs text-slate-500" title={user.email}>
           {user.email}
         </p>
         <button

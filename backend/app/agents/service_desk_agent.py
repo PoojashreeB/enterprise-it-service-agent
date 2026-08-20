@@ -197,7 +197,7 @@ def run_agent(state: ServiceDeskState) -> ServiceDeskState:
     messages = result["messages"]
 
     tools_used = []
-    ticket_number = None
+    ticket_artifact = None
 
     for message in messages:
 
@@ -206,13 +206,14 @@ def run_agent(state: ServiceDeskState) -> ServiceDeskState:
             tools_used.append(message.name)
 
             if message.name == "create_ticket" and message.artifact:
-                ticket_number = message.artifact.get("ticket_number")
+                ticket_artifact = message.artifact
 
     state["final_response"] = messages[-1].content
     state["tools_used"] = tools_used
 
-    if ticket_number:
-        state["ticket_number"] = ticket_number
+    if ticket_artifact:
+        state["ticket_number"] = ticket_artifact.get("ticket_number")
+        state["ticket"] = ticket_artifact
 
     if "create_ticket" in tools_used:
         state["decision"] = "ticket"

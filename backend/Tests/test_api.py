@@ -229,6 +229,42 @@ def test_service_desk_creates_new_conversation(client, auth_headers, monkeypatch
     assert detail["messages"][1]["content"] == "Here is how you can reset your password."
 
 
+def test_service_desk_persists_agent_created_ticket(client, auth_headers, monkeypatch):
+    monkeypatch.setattr(
+        main_module,
+        "graph",
+        SimpleNamespace(
+            invoke=lambda state: _fake_graph_result(
+                decision="ticket",
+                ticket_number="NET-20260101000000-ABC123",
+                ticket={
+                    "ticket_number": "NET-20260101000000-ABC123",
+                    "category": "Network",
+                    "subcategory": "VPN",
+                    "priority": "P1",
+                    "impact": "High",
+                    "urgency": "High",
+                    "justification": "Whole office affected.",
+                    "summary": "VPN is down for everyone",
+                },
+            )
+        ),
+    )
+
+    response = client.post(
+        "/service-desk",
+        json={"message": "VPN is down for everyone"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+
+    tickets = client.get("/tickets", headers=auth_headers).json()
+    assert len(tickets) == 1
+    assert tickets[0]["ticket_number"] == "NET-20260101000000-ABC123"
+    assert tickets[0]["source"] == "agent"
+    assert tickets[0]["category"] == "Network"
+
+
 def test_service_desk_appends_to_existing_conversation(client, auth_headers, monkeypatch):
     monkeypatch.setattr(
         main_module,
@@ -287,6 +323,105 @@ def test_service_desk_with_another_users_conversation_returns_404(client, signup
         json={"message": "Hello", "conversation_id": conversation["id"]},
         headers=intruder_headers,
     )
+
+    assert response.status_code == 404
+
+
+# ================================================================
+# /tickets
+# ================================================================
+
+def test_list_tickets_requires_authentication(client):
+    response = client.get("/tickets")
+
+    assert response.status_code == 401
+
+
+def test_create_ticket_manually(client, auth_headers):
+    response = client.post(
+        "/tickets",
+        json={
+            "category": "Hardware",
+            "subcategory": "Laptop",
+            "priority": "P2",
+            "summary": "My laptop won't turn on.",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["category"] == "Hardware"
+    assert body["subcategory"] == "Laptop"
+    assert body["priority"] == "P2"
+    assert body["summary"] == "My laptop won't turn on."
+    assert body["status"] == "open"
+    assert body["source"] == "manual"
+    assert body["ticket_number"].startswith("H-")
+
+
+def test_create_ticket_requires_category_and_summary(client, auth_headers):
+    response = client.post(
+        "/tickets",
+        json={"category": "", "summary": ""},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_list_tickets_returns_only_my_tickets(client, signup):
+    first_headers = {
+        "Authorization": f"Bearer {signup(email='ticketowner@example.com')['access_token']}"
+    }
+    client.post(
+        "/tickets",
+        json={"category": "Software", "summary": "Need approval to install a tool."},
+        headers=first_headers,
+    )
+
+    second_headers = {
+        "Authorization": f"Bearer {signup(email='ticketother@example.com')['access_token']}"
+    }
+    response = client.get("/tickets", headers=second_headers)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_get_ticket_by_id(client, auth_headers):
+    created = client.post(
+        "/tickets",
+        json={"category": "Network", "summary": "Wi-Fi keeps dropping."},
+        headers=auth_headers,
+    ).json()
+
+    response = client.get(f"/tickets/{created['id']}", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json()["ticket_number"] == created["ticket_number"]
+
+
+def test_get_ticket_not_found(client, auth_headers):
+    response = client.get("/tickets/does-not-exist", headers=auth_headers)
+
+    assert response.status_code == 404
+
+
+def test_get_ticket_owned_by_another_user_is_not_found(client, signup):
+    owner_headers = {
+        "Authorization": f"Bearer {signup(email='ticketowner2@example.com')['access_token']}"
+    }
+    created = client.post(
+        "/tickets",
+        json={"category": "Network", "summary": "Wi-Fi keeps dropping."},
+        headers=owner_headers,
+    ).json()
+
+    intruder_headers = {
+        "Authorization": f"Bearer {signup(email='ticketintruder@example.com')['access_token']}"
+    }
+    response = client.get(f"/tickets/{created['id']}", headers=intruder_headers)
 
     assert response.status_code == 404
 

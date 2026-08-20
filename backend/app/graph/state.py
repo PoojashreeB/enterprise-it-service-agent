@@ -24,6 +24,7 @@ class ServiceDeskState(TypedDict, total=False):
 
     # Ticket
     ticket_number: str
+    ticket: dict
 
     # Final response
     final_response: str
