@@ -25,3 +25,19 @@ class TicketOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PasswordResetCreateRequest(BaseModel):
+    username: str = Field(min_length=1)
+    reason: str = ""
+
+
+class PasswordResetOut(BaseModel):
+    id: str
+    username: str
+    reason: str
+    status: str
+    source: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

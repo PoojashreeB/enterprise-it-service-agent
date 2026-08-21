@@ -198,6 +198,7 @@ def run_agent(state: ServiceDeskState) -> ServiceDeskState:
 
     tools_used = []
     ticket_artifact = None
+    password_reset_artifact = None
 
     for message in messages:
 
@@ -208,6 +209,9 @@ def run_agent(state: ServiceDeskState) -> ServiceDeskState:
             if message.name == "create_ticket" and message.artifact:
                 ticket_artifact = message.artifact
 
+            if message.name == "reset_password" and message.artifact:
+                password_reset_artifact = message.artifact
+
     state["final_response"] = messages[-1].content
     state["tools_used"] = tools_used
 
@@ -215,8 +219,13 @@ def run_agent(state: ServiceDeskState) -> ServiceDeskState:
         state["ticket_number"] = ticket_artifact.get("ticket_number")
         state["ticket"] = ticket_artifact
 
+    if password_reset_artifact:
+        state["password_reset"] = password_reset_artifact
+
     if "create_ticket" in tools_used:
         state["decision"] = "ticket"
+    elif "reset_password" in tools_used:
+        state["decision"] = "password_reset"
     elif "search_knowledge_base" in tools_used:
         state["decision"] = "knowledge"
     else:

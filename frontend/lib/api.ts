@@ -1,4 +1,10 @@
-import { Conversation, ConversationDetail, Ticket, User } from "./types";
+import {
+  Conversation,
+  ConversationDetail,
+  PasswordResetRequest,
+  Ticket,
+  User,
+} from "./types";
 
 export interface ServiceDeskResult {
   user_query?: string;
@@ -107,4 +113,21 @@ export async function createTicket(payload: {
     body: JSON.stringify(payload),
   });
   return parseOrThrow<Ticket>(response);
+}
+
+export async function fetchPasswordResets(): Promise<PasswordResetRequest[]> {
+  const response = await fetch("/api/password-resets");
+  return parseOrThrow<PasswordResetRequest[]>(response);
+}
+
+export async function createPasswordReset(payload: {
+  username: string;
+  reason: string;
+}): Promise<PasswordResetRequest> {
+  const response = await fetch("/api/password-resets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return parseOrThrow<PasswordResetRequest>(response);
 }

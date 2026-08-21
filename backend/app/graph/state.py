@@ -26,5 +26,8 @@ class ServiceDeskState(TypedDict, total=False):
     ticket_number: str
     ticket: dict
 
+    # Password reset
+    password_reset: dict
+
     # Final response
     final_response: str

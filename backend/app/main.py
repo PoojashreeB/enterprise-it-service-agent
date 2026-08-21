@@ -9,11 +9,12 @@ from sqlalchemy.orm import Session
 
 from app.api import auth as auth_router
 from app.api import conversations as conversations_router
+from app.api import password_resets as password_resets_router
 from app.api import tickets as tickets_router
 from app.api.deps import get_current_user
 from app.core.db import Base, engine, get_db
 from app.graph.workflow import build_service_desk_graph
-from app.models.database import Conversation, Message, Ticket, User
+from app.models.database import Conversation, Message, PasswordResetRequest, Ticket, User
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ app = FastAPI(
 app.include_router(auth_router.router)
 app.include_router(conversations_router.router)
 app.include_router(tickets_router.router)
+app.include_router(password_resets_router.router)
 
 
 @app.exception_handler(Exception)
@@ -132,6 +134,19 @@ def service_desk(
                 justification=ticket_artifact.get("justification", ""),
                 summary=ticket_artifact.get("summary", ""),
                 status="open",
+                source="agent",
+            )
+        )
+
+    password_reset_artifact = result.get("password_reset")
+    if password_reset_artifact:
+        db.add(
+            PasswordResetRequest(
+                user_id=current_user.id,
+                conversation_id=conversation.id,
+                username=password_reset_artifact.get("username", ""),
+                reason=password_reset_artifact.get("reason", ""),
+                status=password_reset_artifact.get("status", "queued"),
                 source="agent",
             )
         )

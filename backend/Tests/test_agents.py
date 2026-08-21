@@ -221,6 +221,34 @@ def test_run_agent_tracks_ticket_creation(monkeypatch):
     assert "create_ticket" in state["tools_used"]
 
 
+def test_run_agent_tracks_password_reset(monkeypatch):
+    messages = [
+        ToolMessage(
+            content="[MOCK] A password reset email has been queued for 'jdoe'.",
+            name="reset_password",
+            tool_call_id="call_1",
+            artifact={
+                "username": "jdoe",
+                "reason": "Requested via the chat assistant.",
+                "status": "queued",
+            },
+        ),
+        AIMessage(content="I've queued a password reset email for you."),
+    ]
+    _fake_agent(monkeypatch, messages)
+
+    state = service_desk_agent.run_agent({"user_query": "I forgot my password, username jdoe"})
+
+    assert state["decision"] == "password_reset"
+    assert state["password_reset"] == {
+        "username": "jdoe",
+        "reason": "Requested via the chat assistant.",
+        "status": "queued",
+    }
+    assert "reset_password" in state["tools_used"]
+    assert "ticket_number" not in state
+
+
 def test_run_agent_prioritizes_ticket_decision_over_knowledge(monkeypatch):
     messages = [
         ToolMessage(

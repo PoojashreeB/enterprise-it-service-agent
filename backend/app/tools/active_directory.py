@@ -18,8 +18,8 @@ def lookup_user(username: str) -> str:
     )
 
 
-@tool
-def reset_password(username: str) -> str:
+@tool(response_format="content_and_artifact")
+def reset_password(username: str, reason: str = "") -> tuple[str, dict]:
     """Trigger a self-service password reset email for a corporate Active
     Directory account.
 
@@ -27,7 +27,13 @@ def reset_password(username: str) -> str:
     perform a real password reset; replace it with a real
     AD/identity-provider integration before relying on it.
     """
-    return (
+    content = (
         f"[MOCK] A password reset email has been queued for '{username}'. "
         f"No real reset was performed."
     )
+    artifact = {
+        "username": username,
+        "reason": reason or "Requested via the chat assistant.",
+        "status": "queued",
+    }
+    return content, artifact

@@ -29,6 +29,9 @@ class User(Base):
     tickets: Mapped[list["Ticket"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    password_reset_requests: Mapped[list["PasswordResetRequest"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Conversation(Base):
@@ -84,3 +87,20 @@ class Ticket(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     user: Mapped["User"] = relationship(back_populates="tickets")
+
+
+class PasswordResetRequest(Base):
+    __tablename__ = "password_reset_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    conversation_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("conversations.id"), nullable=True, index=True
+    )
+    username: Mapped[str] = mapped_column(String(255), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(20), default="queued")
+    source: Mapped[str] = mapped_column(String(20), default="manual")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    user: Mapped["User"] = relationship(back_populates="password_reset_requests")

@@ -65,6 +65,12 @@ export default function Sidebar({
         >
           View tickets
         </Link>
+        <Link
+          href="/password-resets"
+          className="mt-2 block text-sm text-slate-600 hover:text-slate-900"
+        >
+          Reset password
+        </Link>
 
         <p className="mt-3 truncate text-xs text-slate-500" title={user.email}>
           {user.email}

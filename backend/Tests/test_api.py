@@ -427,6 +427,118 @@ def test_get_ticket_owned_by_another_user_is_not_found(client, signup):
 
 
 # ================================================================
+# /password-resets
+# ================================================================
+
+def test_list_password_resets_requires_authentication(client):
+    response = client.get("/password-resets")
+
+    assert response.status_code == 401
+
+
+def test_create_password_reset_manually(client, auth_headers):
+    response = client.post(
+        "/password-resets",
+        json={"username": "jdoe", "reason": "Forgot my password after vacation."},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["username"] == "jdoe"
+    assert body["reason"] == "Forgot my password after vacation."
+    assert body["status"] == "queued"
+    assert body["source"] == "manual"
+
+
+def test_create_password_reset_requires_username(client, auth_headers):
+    response = client.post(
+        "/password-resets",
+        json={"username": ""},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_list_password_resets_returns_only_mine(client, signup):
+    first_headers = {
+        "Authorization": f"Bearer {signup(email='resetowner@example.com')['access_token']}"
+    }
+    client.post("/password-resets", json={"username": "owner"}, headers=first_headers)
+
+    second_headers = {
+        "Authorization": f"Bearer {signup(email='resetother@example.com')['access_token']}"
+    }
+    response = client.get("/password-resets", headers=second_headers)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_get_password_reset_by_id(client, auth_headers):
+    created = client.post(
+        "/password-resets", json={"username": "jdoe"}, headers=auth_headers
+    ).json()
+
+    response = client.get(f"/password-resets/{created['id']}", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json()["username"] == "jdoe"
+
+
+def test_get_password_reset_not_found(client, auth_headers):
+    response = client.get("/password-resets/does-not-exist", headers=auth_headers)
+
+    assert response.status_code == 404
+
+
+def test_get_password_reset_owned_by_another_user_is_not_found(client, signup):
+    owner_headers = {
+        "Authorization": f"Bearer {signup(email='resetowner2@example.com')['access_token']}"
+    }
+    created = client.post(
+        "/password-resets", json={"username": "jdoe"}, headers=owner_headers
+    ).json()
+
+    intruder_headers = {
+        "Authorization": f"Bearer {signup(email='resetintruder@example.com')['access_token']}"
+    }
+    response = client.get(f"/password-resets/{created['id']}", headers=intruder_headers)
+
+    assert response.status_code == 404
+
+
+def test_service_desk_persists_agent_triggered_password_reset(client, auth_headers, monkeypatch):
+    monkeypatch.setattr(
+        main_module,
+        "graph",
+        SimpleNamespace(
+            invoke=lambda state: _fake_graph_result(
+                decision="password_reset",
+                password_reset={
+                    "username": "jdoe",
+                    "reason": "Requested via the chat assistant.",
+                    "status": "queued",
+                },
+            )
+        ),
+    )
+
+    response = client.post(
+        "/service-desk",
+        json={"message": "I forgot my password, my username is jdoe"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+
+    resets = client.get("/password-resets", headers=auth_headers).json()
+    assert len(resets) == 1
+    assert resets[0]["username"] == "jdoe"
+    assert resets[0]["source"] == "agent"
+
+
+# ================================================================
 # Unhandled exceptions
 # ================================================================
 

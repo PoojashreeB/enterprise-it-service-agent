@@ -51,3 +51,12 @@ export interface Ticket {
   source: "agent" | "manual";
   created_at: string;
 }
+
+export interface PasswordResetRequest {
+  id: string;
+  username: string;
+  reason: string;
+  status: string;
+  source: "agent" | "manual";
+  created_at: string;
+}
